@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Courses - EduCloud{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col">
+        <h2 class="fw-bold">Manage Courses</h2>
+        <p class="text-muted">Create and delete courses available on the platform.</p>
+    </div>
+    <div class="col-auto">
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back
+        </a>
+    </div>
+</div>
+
+<!-- Create Course Card -->
+<div class="card p-4 mb-5">
+    <h5 class="fw-bold mb-4"><i class="fas fa-plus-circle me-2 text-primary"></i>Add New Course</h5>
+    <form method="POST" action="{{ url_for('admin.create_course') }}">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <label for="title" class="form-label fw-semibold">Course Title</label>
+                <input type="text" class="form-control" id="title" name="title"
+                       placeholder="e.g. Introduction to Cloud Computing" required>
+            </div>
+            <div class="col-md-6">
+                <label for="description" class="form-label fw-semibold">Description</label>
+                <input type="text" class="form-control" id="description" name="description"
+                       placeholder="Brief course overview…">
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-save me-1"></i> Create
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Course List -->
+<div class="card p-4">
+    <h5 class="fw-bold mb-4">All Courses</h5>
+    {% if courses %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Title</th>
+                        <th>Description</th>
+                        <th>Enrollments</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for course in courses %}
+                    <tr>
+                        <td class="text-muted">{{ course.id }}</td>
+                        <td class="fw-semibold">{{ course.title }}</td>
+                        <td class="text-muted">{{ course.description[:80] if course.description else '—' }}{% if course.description and course.description|length > 80 %}…{% endif %}</td>
+                        <td><span class="badge bg-primary rounded-pill">{{ course.enrollments|length }}</span></td>
+                        <td class="text-end">
+                            <form method="POST" action="{{ url_for('admin.delete_course', course_id=course.id) }}"
+                                  onsubmit="return confirm('Delete course \'{{ course.title }}\'? This will remove all enrollments.');">
+                                <button type="submit" class="btn btn-outline-danger btn-sm">
+                                    <i class="fas fa-trash-alt me-1"></i>Delete
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-book-open fa-3x text-muted mb-3"></i>
+            <p class="text-muted">No courses yet. Create your first course above.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

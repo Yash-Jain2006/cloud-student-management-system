@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Student Dashboard - EduCloud{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2 class="fw-bold">Welcome, {{ current_user.name }}!</h2>
+        <p class="text-muted">Track your learning progress and upcoming courses.</p>
+    </div>
+    <div class="col-md-4 text-md-end">
+        <a href="{{ url_for('student.browse_courses') }}" class="btn btn-primary">
+            <i class="fas fa-search me-2"></i>Browse New Courses
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Enrolled Courses -->
+    <div class="col-lg-8">
+        <div class="card p-4 mb-4">
+            <h4 class="fw-bold mb-4">My Enrolled Courses</h4>
+            {% if enrolled_courses %}
+                <div class="row">
+                    {% for course in enrolled_courses %}
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100 border bg-light shadow-sm">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h5 class="card-title fw-bold mb-0 text-primary">{{ course.title }}</h5>
+                                        <span class="badge bg-primary rounded-pill">Active</span>
+                                    </div>
+                                    <p class="card-text text-muted small mb-4">{{ course.description[:100] }}{% if course.description|length > 100 %}...{% endif %}</p>
+                                    
+                                    <div class="mb-2 d-flex justify-content-between align-items-center">
+                                        <span class="small fw-semibold text-muted">Progress</span>
+                                        <span class="small fw-bold text-primary">0%</span>
+                                    </div>
+                                    <div class="progress progress-sm mb-3">
+                                        <div class="progress-bar progress-bar-striped progress-bar-animated w-0" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" title="Course Progress"></div>
+                                    </div>
+                                    
+                                    <div class="d-grid mt-3">
+                                        <button class="btn btn-outline-primary btn-sm rounded-pill">Continue Learning</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <div class="mb-3">
+                        <i class="fas fa-book-open fa-3x text-light-emphasis"></i>
+                    </div>
+                    <h5>No courses enrolled yet</h5>
+                    <p class="text-muted">Start your journey by browsing available courses.</p>
+                    <a href="{{ url_for('student.browse_courses') }}" class="btn btn-primary mt-2">Explore Courses</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- File Upload Section -->
+    <div class="col-lg-4">
+        <div class="card p-4 mb-4">
+            <h5 class="fw-bold mb-4"><i class="fas fa-file-upload me-2 text-primary"></i>Upload Documents</h5>
+            <form action="{{ url_for('files.upload_file') }}" method="POST" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <label for="file" class="form-label small fw-semibold text-muted">Choose File (PDF, Image, etc.)</label>
+                    <input type="file" class="form-control form-control-sm" id="file" name="file" required>
+                </div>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="fas fa-upload me-1"></i> Upload
+                    </button>
+                </div>
+            </form>
+            
+            <hr class="my-4">
+            
+            <h6 class="fw-bold mb-3">My Uploaded Files</h6>{%- if current_user.files -%}
+            <ul class="list-group list-group-flush">
+                {%- for file in current_user.files %}
+                <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                    <div class="text-truncate text-truncate-sm">
+                        <i class="fas fa-file-alt me-2 text-muted"></i>
+                        <span class="small">{{ file.filename }}</span>
+                    </div>
+                    <a href="{{ file.url }}" target="_blank" class="btn btn-link btn-sm text-decoration-none p-0" title="Open File">
+                        <i class="fas fa-external-link-alt"></i>
+                    </a>
+                </li>
+                {%- endfor %}
+            </ul>
+{%- else -%}
+                <p class="text-muted small mb-0">No files uploaded yet.</p>
+            {%- endif -%}
+        </div>
+    </div>
+</div>
+{% endblock %}

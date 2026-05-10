@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Login - EduCloud{% endblock %}
+
+{% block content %}
+<div class="container auth-container d-flex align-items-center justify-content-center">
+    <div class="col-md-5">
+        <div class="card p-4 p-md-5">
+            <div class="text-center mb-4">
+                <h2 class="fw-bold">Welcome Back</h2>
+                <p class="text-muted">Sign in to your account to continue</p>
+            </div>
+            <form method="POST" action="{{ url_for('auth.login') }}">
+                <div class="mb-3">
+                    <label for="email" class="form-label fw-semibold">Email address</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0"><i class="fas fa-envelope text-muted"></i></span>
+                        <input type="email" class="form-control bg-light border-start-0" id="email" name="email" placeholder="name@example.com" required>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label fw-semibold">Password</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0"><i class="fas fa-lock text-muted"></i></span>
+                        <input type="password" class="form-control bg-light border-start-0" id="password" name="password" placeholder="••••••••" required>
+                    </div>
+                </div>
+                <div class="mb-3 form-check">
+                    <input type="checkbox" class="form-check-input" id="remember" name="remember">
+                    <label class="form-check-label text-muted" for="remember">Remember me</label>
+                </div>
+                <div class="d-grid gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg">Login</button>
+                </div>
+                <div class="text-center mt-4">
+                    <p class="mb-0 text-muted">Don't have an account? <a href="{{ url_for('auth.register') }}" class="text-primary fw-bold text-decoration-none">Register here</a></p>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

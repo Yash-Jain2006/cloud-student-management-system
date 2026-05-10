@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Students - EduCloud{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col">
+        <h2 class="fw-bold">Manage Students</h2>
+        <p class="text-muted">View and remove registered student accounts.</p>
+    </div>
+    <div class="col-auto">
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back
+        </a>
+    </div>
+</div>
+
+<div class="card p-4">
+    {% if students %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Enrolled Courses</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students %}
+                    <tr>
+                        <td class="text-muted">{{ student.id }}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-circle rounded-circle me-3 d-flex align-items-center justify-content-center fw-bold text-white">
+                                    {{ student.name[0].upper() }}
+                                </div>
+                                <span class="fw-semibold">{{ student.name }}</span>
+                            </div>
+                        </td>
+                        <td class="text-muted">{{ student.email }}</td>
+                        <td>
+                            {% if student.enrollments %}
+                                <div class="d-flex flex-wrap gap-1">
+                                    {% for enrollment in student.enrollments %}
+                                        <span class="badge bg-primary-subtle text-primary rounded-pill fw-semibold">
+                                            {{ enrollment.course.title }}
+                                        </span>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <span class="text-muted fst-italic small">No enrollments</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <form method="POST"
+                                  action="{{ url_for('admin.delete_student', user_id=student.id) }}"
+                                  onsubmit="return confirm('Permanently delete student \'{{ student.name }}\'?');">
+                                <button type="submit" class="btn btn-outline-danger btn-sm">
+                                    <i class="fas fa-user-minus me-1"></i>Remove
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-users-slash fa-3x text-muted mb-3"></i>
+            <p class="text-muted">No students registered yet.</p>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
