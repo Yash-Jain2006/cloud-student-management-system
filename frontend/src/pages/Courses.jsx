@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { BookOpen, Search, Filter, CheckCircle, ArrowRight } from 'lucide-react';
 
 const Courses = () => {
   const [courses, setCourses] = useState([]);
-  const [enrolledIds, setEnrolledIds] = useState([]);
+  const [enrolledMap, setEnrolledMap] = useState({}); // { courseId: progress }
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
 
@@ -19,7 +19,10 @@ const Courses = () => {
         if (allRes.ok && enrolledRes.ok) {
           setCourses(await allRes.json());
           const enrolledData = await enrolledRes.json();
-          setEnrolledIds(enrolledData.map(c => c.id));
+          // Build map: { courseId -> progress }
+          const map = {};
+          enrolledData.forEach(c => { map[c.id] = c.progress ?? 0; });
+          setEnrolledMap(map);
         }
       } catch (err) { console.error(err); }
       finally { setLoading(false); }
@@ -35,12 +38,26 @@ const Courses = () => {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
-        setEnrolledIds([...enrolledIds, courseId]);
+        setEnrolledMap(prev => ({ ...prev, [courseId]: 0 }));
         setMessage('Successfully enrolled! 🎉');
         setTimeout(() => setMessage(''), 3000);
       }
     } catch (err) { console.error(err); }
   };
+
+  const handleProgressUpdate = async (courseId, newProgress) => {
+    const token = localStorage.getItem('token');
+    try {
+      await fetch(`/api/v1/courses/${courseId}/progress`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ progress: newProgress }),
+      });
+      setEnrolledMap(prev => ({ ...prev, [courseId]: newProgress }));
+    } catch (err) { console.error('Progress update failed:', err); }
+  };
+
+  if (loading) return <div style={{ color: 'var(--text-muted)', padding: '2rem' }}>Loading courses...</div>;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -59,13 +76,13 @@ const Courses = () => {
       </div>
 
       {message && (
-        <div style={{ 
-          background: 'rgba(16, 185, 129, 0.1)', 
-          color: '#10b981', 
-          padding: '1rem', 
-          borderRadius: 'var(--radius-md)', 
-          display: 'flex', 
-          alignItems: 'center', 
+        <div style={{
+          background: 'rgba(16, 185, 129, 0.1)',
+          color: '#10b981',
+          padding: '1rem',
+          borderRadius: 'var(--radius-md)',
+          display: 'flex',
+          alignItems: 'center',
           gap: '0.5rem',
           border: '1px solid rgba(16, 185, 129, 0.2)'
         }}>
@@ -75,33 +92,68 @@ const Courses = () => {
 
       {/* Course Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem' }}>
-        {courses.map(course => (
-          <div key={course.id} className="glass-card" style={{ display: 'flex', flexDirection: 'column' }}>
-            <div style={{ padding: '1.5rem', flex: 1 }}>
-              <div style={{ 
-                width: '40px', height: '40px', background: 'rgba(79, 70, 229, 0.1)', 
-                borderRadius: '10px', display: 'flex', alignItems: 'center', 
-                justifyContent: 'center', marginBottom: '1.25rem', color: 'var(--primary)'
-              }}>
-                <BookOpen size={20} />
+        {courses.map(course => {
+          const isEnrolled = course.id in enrolledMap;
+          const pct = Math.round(enrolledMap[course.id] ?? 0);
+          const barColor = pct >= 100 ? '#10b981' : pct >= 50 ? '#4f46e5' : '#f59e0b';
+
+          return (
+            <div key={course.id} className="glass-card" style={{ display: 'flex', flexDirection: 'column' }}>
+              <div style={{ padding: '1.5rem', flex: 1 }}>
+                <div style={{
+                  width: '40px', height: '40px', background: 'rgba(79, 70, 229, 0.1)',
+                  borderRadius: '10px', display: 'flex', alignItems: 'center',
+                  justifyContent: 'center', marginBottom: '1.25rem', color: 'var(--primary)'
+                }}>
+                  <BookOpen size={20} />
+                </div>
+                <h3 style={{ fontSize: '1.25rem', marginBottom: '0.75rem' }}>{course.title}</h3>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: '1.6' }}>{course.description}</p>
               </div>
-              <h3 style={{ fontSize: '1.25rem', marginBottom: '0.75rem' }}>{course.title}</h3>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', lineHeight: '1.6' }}>{course.description}</p>
-            </div>
-            
-            <div style={{ padding: '1.25rem', borderTop: '1px solid var(--border-glass)', background: 'rgba(255,255,255,0.02)' }}>
-              {enrolledIds.includes(course.id) ? (
-                <button className="btn btn-glass" style={{ width: '100%', cursor: 'default', color: '#10b981' }} disabled>
-                  <CheckCircle size={18} /> Enrolled
-                </button>
-              ) : (
-                <button className="btn btn-primary" style={{ width: '100%' }} onClick={() => handleEnroll(course.id)}>
-                  Enroll Now <ArrowRight size={18} />
-                </button>
+
+              {/* Progress section — only for enrolled courses */}
+              {isEnrolled && (
+                <div style={{ padding: '0 1.5rem 1rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Your progress</span>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: barColor }}>{pct}%</span>
+                  </div>
+                  {/* Progress bar */}
+                  <div style={{ height: '5px', background: 'rgba(255,255,255,0.08)', borderRadius: '999px', overflow: 'hidden', marginBottom: '0.5rem' }}>
+                    <div style={{
+                      height: '100%',
+                      width: `${pct}%`,
+                      background: `linear-gradient(90deg, ${barColor}, ${barColor}cc)`,
+                      borderRadius: '999px',
+                      transition: 'width 0.4s ease'
+                    }} />
+                  </div>
+                  {/* Self-report slider */}
+                  <input
+                    type="range"
+                    min={0} max={100} step={5}
+                    value={pct}
+                    onChange={e => handleProgressUpdate(course.id, Number(e.target.value))}
+                    style={{ width: '100%', accentColor: barColor, cursor: 'pointer' }}
+                    title="Drag to update your progress"
+                  />
+                </div>
               )}
+
+              <div style={{ padding: '1.25rem', borderTop: '1px solid var(--border-glass)', background: 'rgba(255,255,255,0.02)' }}>
+                {isEnrolled ? (
+                  <button className="btn btn-glass" style={{ width: '100%', cursor: 'default', color: '#10b981' }} disabled>
+                    <CheckCircle size={18} /> {pct >= 100 ? 'Completed ✓' : 'Enrolled'}
+                  </button>
+                ) : (
+                  <button className="btn btn-primary" style={{ width: '100%' }} onClick={() => handleEnroll(course.id)}>
+                    Enroll Now <ArrowRight size={18} />
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

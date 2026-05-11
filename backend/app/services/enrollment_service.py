@@ -26,8 +26,30 @@ def enroll_student(db: Session, course_id: int, student_id: int):
     return {"message": "Successfully enrolled", "enrollment_id": enrollment.id}
 
 def get_student_enrollments(db: Session, student_id: int):
-    """Fetch all courses a student is enrolled in."""
-    return db.query(models.Course).join(models.Enrollment).filter(models.Enrollment.student_id == student_id).all()
+    """Fetch all courses a student is enrolled in, with their progress."""
+    enrollments = (
+        db.query(models.Enrollment)
+        .filter(models.Enrollment.student_id == student_id)
+        .all()
+    )
+    result = []
+    for e in enrollments:
+        course = e.course
+        result.append({
+            "id": course.id,
+            "title": course.title,
+            "description": course.description,
+            "instructor_id": course.instructor_id,
+            "progress": e.progress,
+        })
+    return result
+
+def get_enrollment(db: Session, student_id: int, course_id: int):
+    """Return a single Enrollment record for a student/course pair."""
+    return db.query(models.Enrollment).filter(
+        models.Enrollment.student_id == student_id,
+        models.Enrollment.course_id == course_id
+    ).first()
 
 def update_progress(db: Session, enrollment_id: int, progress: int):
     """Update student progress in a course."""

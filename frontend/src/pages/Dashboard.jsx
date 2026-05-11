@@ -44,7 +44,7 @@ const Dashboard = () => {
       try {
         const [userRes, coursesRes, filesRes, storageRes] = await Promise.all([
           fetch('/api/v1/users/me', { headers: { 'Authorization': `Bearer ${token}` } }),
-          fetch('/api/v1/courses/', { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch('/api/v1/courses/enrolled', { headers: { 'Authorization': `Bearer ${token}` } }),
           fetch('/api/v1/files/', { headers: { 'Authorization': `Bearer ${token}` } }),
           fetch('/api/v1/files/storage-status', { headers: { 'Authorization': `Bearer ${token}` } }),
         ]);
@@ -217,6 +217,22 @@ const Dashboard = () => {
     }
   };
 
+  const handleProgressUpdate = async (courseId, newProgress) => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    try {
+      await fetch(`/api/v1/courses/${courseId}/progress`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ progress: newProgress }),
+      });
+      // Optimistically update local state
+      setCourses(prev => prev.map(c => c.id === courseId ? { ...c, progress: newProgress } : c));
+    } catch (err) {
+      console.error('Progress update failed:', err);
+    }
+  };
+
   if (loading) return <div className="flex-center" style={{ height: '60vh' }}>Loading Portal...</div>;
 
   return (
@@ -271,24 +287,42 @@ const Dashboard = () => {
               {courses.length === 0 ? (
                 <p style={{ color: 'var(--text-dim)' }}>You are not enrolled in any courses yet.</p>
               ) : (
-                courses.map((course) => (
-                  <div
-                    key={course.id}
-                    style={{
-                      padding: '1rem',
-                      borderBottom: '1px solid var(--border-glass)',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <div>
-                      <h3 style={{ fontSize: '1.1rem' }}>{course.title}</h3>
-                      <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Progress: 0%</p>
+                courses.map((course) => {
+                  const pct = Math.round(course.progress ?? 0);
+                  const barColor = pct >= 100 ? '#10b981' : pct >= 50 ? '#4f46e5' : '#f59e0b';
+                  return (
+                    <div
+                      key={course.id}
+                      style={{
+                        padding: '1rem',
+                        borderBottom: '1px solid var(--border-glass)',
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                        <h3 style={{ fontSize: '1.1rem' }}>{course.title}</h3>
+                        <span style={{ fontSize: '0.85rem', fontWeight: 600, color: barColor }}>{pct}%</span>
+                      </div>
+                      {/* Progress bar */}
+                      <div style={{ height: '6px', background: 'rgba(255,255,255,0.08)', borderRadius: '999px', overflow: 'hidden', marginBottom: '0.6rem' }}>
+                        <div style={{ height: '100%', width: `${pct}%`, background: `linear-gradient(90deg, ${barColor}, ${barColor}cc)`, borderRadius: '999px', transition: 'width 0.4s ease' }} />
+                      </div>
+                      {/* Self-report slider */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                        <input
+                          type="range"
+                          min={0} max={100} step={5}
+                          value={pct}
+                          onChange={e => handleProgressUpdate(course.id, Number(e.target.value))}
+                          style={{ flex: 1, accentColor: barColor, cursor: 'pointer' }}
+                          title="Drag to update your progress"
+                        />
+                        {pct >= 100 && (
+                          <CheckCircle size={16} color="#10b981" title="Completed!" />
+                        )}
+                      </div>
                     </div>
-                    <button className="btn btn-glass" style={{ padding: '0.5rem 1rem' }}>View</button>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </section>
