@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { LogIn, Lock, User, ShieldCheck, GraduationCap } from 'lucide-react';
 import AnimatedContainer, { HoverScale } from '../components/common/AnimatedContainer';
+import API_BASE_URL from '../config';
 
 const Login = () => {
   const [formData, setFormData] = useState({ username: '', password: '' });
@@ -16,7 +17,7 @@ const Login = () => {
     setError('');
 
     try {
-      const response = await fetch('/api/v1/auth/login', {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: new URLSearchParams({
@@ -34,7 +35,7 @@ const Login = () => {
       localStorage.setItem('token', data.access_token);
 
       // Fetch user profile to determine role and redirect
-      const profileRes = await fetch('/api/v1/users/me', {
+      const profileRes = await fetch(`${API_BASE_URL}/api/v1/users/me`, {
         headers: { 'Authorization': `Bearer ${data.access_token}` }
       });
 

@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BookOpen, Search, Filter, CheckCircle, ArrowRight } from 'lucide-react';
+import API_BASE_URL from '../config';
+
 
 const Courses = () => {
   const [courses, setCourses] = useState([]);
@@ -12,8 +14,8 @@ const Courses = () => {
       const token = localStorage.getItem('token');
       try {
         const [allRes, enrolledRes] = await Promise.all([
-          fetch('/api/v1/courses/', { headers: { 'Authorization': `Bearer ${token}` } }),
-          fetch('/api/v1/courses/enrolled', { headers: { 'Authorization': `Bearer ${token}` } })
+          fetch(`${API_BASE_URL}/api/v1/courses/`, { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch(`${API_BASE_URL}/api/v1/courses/enrolled`, { headers: { 'Authorization': `Bearer ${token}` } })
         ]);
 
         if (allRes.ok && enrolledRes.ok) {
@@ -33,7 +35,7 @@ const Courses = () => {
   const handleEnroll = async (courseId) => {
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`/api/v1/courses/${courseId}/enroll`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/courses/${courseId}/enroll`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -48,7 +50,7 @@ const Courses = () => {
   const handleProgressUpdate = async (courseId, newProgress) => {
     const token = localStorage.getItem('token');
     try {
-      await fetch(`/api/v1/courses/${courseId}/progress`, {
+      await fetch(`${API_BASE_URL}/api/v1/courses/${courseId}/progress`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ progress: newProgress }),

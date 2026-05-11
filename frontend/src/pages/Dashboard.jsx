@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { BookOpen, Upload, CheckCircle, Trophy, Activity, Clock, Download } from 'lucide-react';
 import StatCard from '../components/common/StatCard';
 import AnimatedContainer, { HoverScale } from '../components/common/AnimatedContainer';
+import API_BASE_URL from '../config';
+
 
 const MAX_UPLOAD_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
 const SUPPORTED_FILE_TYPES = new Set([
@@ -43,10 +45,10 @@ const Dashboard = () => {
 
       try {
         const [userRes, coursesRes, filesRes, storageRes] = await Promise.all([
-          fetch('/api/v1/users/me', { headers: { 'Authorization': `Bearer ${token}` } }),
-          fetch('/api/v1/courses/enrolled', { headers: { 'Authorization': `Bearer ${token}` } }),
-          fetch('/api/v1/files/', { headers: { 'Authorization': `Bearer ${token}` } }),
-          fetch('/api/v1/files/storage-status', { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch(`${API_BASE_URL}/api/v1/users/me`, { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch(`${API_BASE_URL}/api/v1/courses/enrolled`, { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch(`${API_BASE_URL}/api/v1/files/`, { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch(`${API_BASE_URL}/api/v1/files/storage-status`, { headers: { 'Authorization': `Bearer ${token}` } }),
         ]);
 
         if (userRes.ok && coursesRes.ok && filesRes.ok) {
@@ -143,7 +145,7 @@ const Dashboard = () => {
         throw new Error(fileTypeError);
       }
 
-      const metadataRes = await fetch('/api/v1/files/generate-presigned-url', {
+      const metadataRes = await fetch(`${API_BASE_URL}/api/v1/files/generate-presigned-url`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -192,12 +194,12 @@ const Dashboard = () => {
     setUploadError('');
     setDownloadingFileId(fileId);
     try {
-      let res = await fetch(`/api/v1/files/${fileId}/download-url`, {
+      let res = await fetch(`${API_BASE_URL}/api/v1/files/${fileId}/download-url`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
       if (res.status === 404) {
         // Compatibility fallback for older backend route conventions.
-        res = await fetch(`/api/v1/files/download-url/${fileId}`, {
+        res = await fetch(`${API_BASE_URL}/api/v1/files/download-url/${fileId}`, {
           headers: { 'Authorization': `Bearer ${token}` },
         });
       }
