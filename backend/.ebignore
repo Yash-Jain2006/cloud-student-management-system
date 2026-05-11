@@ -1,0 +1,14 @@
+# Exclude secrets and unnecessary files from EB deployment
+.env
+.venv
+venv
+__pycache__
+*.pyc
+*.pyo
+.git
+.gitignore
+test_db.py
+scripts
+alembic
+alembic.ini
+*.md
